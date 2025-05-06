@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>tech.wetech.flexmodel</groupId>
+  <artifactId>flexmodel-code-templates</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub MetaCode Apache Maven Packages</name>
+      <url>https://maven.pkg.github.com/flexmodel-projects/flexmodel-maven-packages</url>
+    </repository>
+  </distributionManagement>
+
+  <build>
+    <resources>
+      <!-- 除了默认的 src/main/resources，还把 project 根目录下所有文件都当作资源 -->
+      <resource>
+        <directory>${project.basedir}</directory>
+        <includes>
+          <include>templates/**/*</include>
+        </includes>
+      </resource>
+    </resources>
+
+    <plugins>
+      <!-- 先拷贝资源 -->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>copy-all</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>resources</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- 再打包 JAR 时包含 classes 目录下全部内容 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.1</version>
+        <configuration>
+          <includes>
+            <!-- 把 target/classes 下所有内容打包 -->
+            <include>**/*</include>
+          </includes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+
+</project>
