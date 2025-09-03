@@ -22,8 +22,9 @@
       <resource>
         <directory>${project.basedir}</directory>
         <includes>
-          <include>templates/**/*</include>
+          <include>src/main/templates/**/*</include>
         </includes>
+        <targetPath>templates</targetPath>
       </resource>
     </resources>
 
