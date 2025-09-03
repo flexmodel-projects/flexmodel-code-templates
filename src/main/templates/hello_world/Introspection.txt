@@ -1,0 +1,92 @@
+# 模板示例
+
+以下为 java_sample 模板可用变量的示例取值（可按需修改）：
+
+{
+  "rootPackage": "com.example",
+  "packageName": "com.example.dsl",
+  "schemaName": "sample",
+  "import_data": [
+    {
+      "type": "entity",
+      "name": "User",
+      "data": [{"id": 1, "name": "Alice"}]
+    }
+  ],
+  "modelClassList": [
+    {
+      "shortClassName": "User",
+      "variableName": "user",
+      "packageName": "com.example.model",
+      "comment": "用户实体",
+      "imports": [
+        "tech.wetech.flexmodel.annotation.ModelClass",
+        "tech.wetech.flexmodel.annotation.ModelField",
+        "tech.wetech.flexmodel.annotation.ModelRelation"
+      ],
+      "original": {"name": "user"},
+      "allFields": [
+        {"original": {"name": "id"}, "shortTypeName": "Long", "variableName": "id", "comment": "主键", "relationField": false},
+        {"original": {"name": "name"}, "shortTypeName": "String", "variableName": "name", "comment": "名称", "relationField": false}
+      ],
+      "idField": {"variableName": "id"}
+    }
+  ],
+  "enumClassList": [
+    {
+      "shortClassName": "Status",
+      "variableName": "status",
+      "packageName": "com.example.enums",
+      "comment": "状态枚举",
+      "elements": ["ACTIVE", "INACTIVE"]
+    }
+  ]
+}
+
+
+---
+模板变量使用示例（Groovy 生成器片段）：
+
+```groovy
+import tech.wetech.flexmodel.codegen.GenerationContext
+
+void write(PrintWriter out, GenerationContext context) {
+  // 基本变量
+  String rootPackage = (String) context.getVariable("rootPackage")
+  String packageName = context.getPackageName()  // 或者使用 context.getVariable("packageName")
+  String schemaName  = context.getSchemaName()   // 或者使用 context.getVariable("schemaName")
+
+  // 列表变量（模型/枚举）
+  def modelClassList = context.modelClassList
+  def enumClassList  = context.enumClassList
+
+  // 自定义导入数据
+  List<?> importData = (List<?>) context.getVariable("import_data")
+
+  // 使用示例：生成包名与导入
++  out.println "package ${packageName};"
+  modelClassList.each { m ->
+    out.println "import ${rootPackage}.dsl.${m.shortClassName}DSL;"
+  }
+
+  // 使用示例：根据模型与枚举生成代码片段
+  modelClassList.each { m ->
+    if (m.comment) {
+      out.println "/** ${m.comment} */"
+    }
+    out.println "public static final ${m.shortClassName}DSL ${m.variableName} = new ${m.shortClassName}DSL();"
+  }
+
+  enumClassList.each { e ->
+    if (e.comment) {
+      out.println "/** ${e.comment} */"
+    }
+    out.println "// enum: ${e.shortClassName} elements -> ${e.elements}"
+  }
+
+  // 使用示例：导入数据的序列化写出（与 SchemaGenerator 类似）
+  importData.each { d ->
+    out.println "// import data -> ${d}"
+  }
+}
+```
