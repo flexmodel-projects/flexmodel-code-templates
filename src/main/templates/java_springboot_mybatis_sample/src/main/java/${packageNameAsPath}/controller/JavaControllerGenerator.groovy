@@ -4,7 +4,7 @@ import tech.wetech.flexmodel.codegen.ModelClass
 
 import java.nio.file.Path
 
-class ControllerGenerator extends AbstractGenerator {
+class JavaControllerGenerator extends AbstractGenerator {
 
   @Override
   String getTargetFile(GenerationContext context, String targetDirectory) {

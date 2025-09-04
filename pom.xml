@@ -15,6 +15,14 @@
       <url>https://maven.pkg.github.com/flexmodel-projects/flexmodel-maven-packages</url>
     </repository>
   </distributionManagement>
+  <dependencies>
+    <dependency>
+      <groupId>tech.wetech.flexmodel</groupId>
+      <artifactId>flexmodel-codegen</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+      <optional>true</optional>
+    </dependency>
+  </dependencies>
 
   <build>
     <resources>

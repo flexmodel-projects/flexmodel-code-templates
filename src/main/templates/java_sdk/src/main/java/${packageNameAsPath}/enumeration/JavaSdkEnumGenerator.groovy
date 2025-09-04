@@ -9,7 +9,7 @@ import java.nio.file.Path
  * @author cjbi
  */
 @Log
-class EnumGenerator extends AbstractGenerator {
+class JavaSdkEnumGenerator extends AbstractGenerator {
 
   @Override
   String getTargetFile(GenerationContext context, String targetDirectory) {

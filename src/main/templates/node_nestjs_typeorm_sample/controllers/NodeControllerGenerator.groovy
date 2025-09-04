@@ -4,12 +4,12 @@ import tech.wetech.flexmodel.codegen.ModelClass
 
 import java.nio.file.Path
 
-class ControllerGenerator extends AbstractGenerator {
+class NodeControllerGenerator extends AbstractGenerator {
 
   @Override
   String getTargetFile(GenerationContext context, String targetDirectory) {
     ModelClass modelClass = context.modelClass
-    return Path.of('src', 'controllers', modelClass.shortClassName.toLowerCase() + '.controller.ts').toString()
+    return Path.of(targetDirectory, modelClass.shortClassName.toLowerCase() + '.controller.ts').toString()
   }
 
   @Override

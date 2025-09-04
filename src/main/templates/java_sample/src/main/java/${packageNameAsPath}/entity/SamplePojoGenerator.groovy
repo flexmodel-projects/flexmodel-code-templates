@@ -10,7 +10,7 @@ import java.nio.file.Path
  *
  * Author: cjbi
  */
-class PojoGenerator extends AbstractGenerator {
+class SamplePojoGenerator extends AbstractGenerator {
 
   @Override
   String getTargetFile(GenerationContext context, String targetDirectory) {
