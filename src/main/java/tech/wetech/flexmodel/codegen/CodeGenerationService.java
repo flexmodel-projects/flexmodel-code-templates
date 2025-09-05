@@ -162,7 +162,7 @@ public class CodeGenerationService {
     } else if (path.toString().endsWith(".groovy")) {
       processGroovyFile(classLoader, context, path, normalizedSource, normalizedTarget, outputFiles);
     } else {
-      processFile(path, context, sourceDirectory, targetDirectory, outputFiles);
+      copyFile(path, context, normalizedSource, normalizedTarget, outputFiles);
     }
   }
 
@@ -185,21 +185,13 @@ public class CodeGenerationService {
       outputFiles.addAll(result);
     } catch (Exception e) {
       log.error("Generate file error, file: {}", path, e);
-      String targetPath = resolveTargetPath(path.toString(), context, sourceDirectory, targetDirectory);
-      Files.copy(path, Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
-      outputFiles.add(new File(targetPath));
+      copyFile(path, context, sourceDirectory, targetDirectory, outputFiles);
     }
   }
 
-  private void processFile(Path path, GenerationContext context, String sourceDirectory, String targetDirectory, List<File> outputFiles) throws Exception {
+  private void copyFile(Path path, GenerationContext context, String sourceDirectory, String targetDirectory, List<File> outputFiles) throws Exception {
     String targetPath = resolveTargetPath(path.toString(), context, sourceDirectory, targetDirectory);
-
-    // 读取源文件内容并进行变量替换
-    String content = Files.readString(path);
-    String processedContent = simpleRenderTemplate(content, context.getVariables());
-
-    // 写入处理后的内容到目标文件
-    Files.write(Paths.get(targetPath), processedContent.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    Files.copy(path, Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
     outputFiles.add(new File(targetPath));
   }
 
