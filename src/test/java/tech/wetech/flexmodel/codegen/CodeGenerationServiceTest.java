@@ -20,16 +20,16 @@ class CodeGenerationServiceTest extends AbstractIntegrationTest {
 
   @Test
   void testGetTemplates() {
-    List<String> templates = codeGenerationService.getTemplates();
+    List<TemplateInfo> templates = codeGenerationService.getTemplates();
     log.info("testGetTemplates, templates: {}", templates);
     Assertions.assertFalse(templates.isEmpty());
   }
 
   @Test
   void testGenerateCode() {
-    List<String> templates = codeGenerationService.getTemplates();
+    List<TemplateInfo> templates = codeGenerationService.getTemplates();
     templates.forEach(template -> {
-      Path path = codeGenerationService.generateCode(SCHEMA_NAME, template, new HashMap<>());
+      Path path = codeGenerationService.generateCode(SCHEMA_NAME, template.name(), new HashMap<>());
       log.info("testGenerateCode, template: {}, path: {}", template, path);
       Assertions.assertTrue(path.toFile().exists());
       Assertions.assertTrue(path.toFile().isDirectory());

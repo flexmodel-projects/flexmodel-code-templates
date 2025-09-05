@@ -3,9 +3,11 @@ package tech.wetech.flexmodel.codegen;
 import groovy.lang.GroovyClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tech.wetech.flexmodel.JsonObjectConverter;
 import tech.wetech.flexmodel.model.EntityDefinition;
 import tech.wetech.flexmodel.model.EnumDefinition;
 import tech.wetech.flexmodel.session.SessionFactory;
+import tech.wetech.flexmodel.supports.jackson.JacksonObjectConverter;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static tech.wetech.flexmodel.sql.StringHelper.simpleRenderTemplate;
 
@@ -31,17 +32,19 @@ public class CodeGenerationService {
 
   private static FileSystem fs = null;
 
-  GroovyClassLoader loader = new GroovyClassLoader();
+  private final GroovyClassLoader loader = new GroovyClassLoader();
 
-  private static List<String> templateNames;
   private final SessionFactory sessionFactory;
+  private final JsonObjectConverter jsonConverter = new JacksonObjectConverter();
+
+  private final Map<String, TemplateInfo> templateInfoMap = new HashMap<>();
 
   private final Logger log = LoggerFactory.getLogger(CodeGenerationService.class);
 
   public CodeGenerationService(SessionFactory sessionFactory) {
     this.sessionFactory = sessionFactory;
     initializeFileSystem();
-    loadTemplateNames();
+    loadTemplates();
     registerShutdownHook();
     log.info("Jar package template has been mounted successfully");
   }
@@ -70,7 +73,7 @@ public class CodeGenerationService {
     }
   }
 
-  private void loadTemplateNames() {
+  private void loadTemplates() {
     try {
       Path templatePath;
       if (fs == FileSystems.getDefault()) {
@@ -83,11 +86,25 @@ public class CodeGenerationService {
       }
 
       try (Stream<Path> stream = Files.list(templatePath)) {
-        templateNames = stream.map(p -> p.getFileName().toString()).toList();
+        List<String> templateNames = stream.map(p -> p.getFileName().toString()).toList();
+        preloadTemplates(templateNames);
       }
     } catch (IOException | URISyntaxException e) {
       throw new RuntimeException("Failed to load template names", e);
     }
+  }
+
+  private void preloadTemplates(List<String> templateNames) {
+    log.debug("Preloading default variables for all templates...");
+    for (String templateName : templateNames) {
+      try {
+        loadTemplate(templateName);
+        log.debug("Preloaded default variables for template: {}", templateName);
+      } catch (Exception e) {
+        log.debug("No default variables found for template: {}", templateName);
+      }
+    }
+    log.debug("Preloading completed. Cached {} template variables.", templateInfoMap.size());
   }
 
   private void registerShutdownHook() {
@@ -120,8 +137,9 @@ public class CodeGenerationService {
   }
 
 
-  public List<String> getTemplates() {
-    return templateNames;
+  public List<TemplateInfo> getTemplates() {
+    return templateInfoMap.values().stream()
+      .toList();
   }
 
   /**
@@ -130,28 +148,28 @@ public class CodeGenerationService {
   public Path generateCode(String datasourceName, String templateName, Map<String, Object> variables) {
     long startTime = System.currentTimeMillis();
     log.debug("Starting code generation - datasource: {}, template: {}", datasourceName, templateName);
-    
+
     List<File> outputFiles = new ArrayList<>();
     try {
       // Merge with default variables from .flexmodel/variables.json
       Map<String, Object> mergedVariables = mergeWithDefaultVariables(templateName, variables);
-      
+
       GenerationContext ctx = buildContext(datasourceName, mergedVariables);
       java.nio.file.Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "codegen", "" + System.currentTimeMillis());
       Path templateDir = getTemplatePath(templateName);
       outputFiles(loader, ctx, templateDir,
         templateDir.toString(), targetPath.toString(), outputFiles);
-      
+
       long endTime = System.currentTimeMillis();
       long duration = endTime - startTime;
-      log.debug("Code generation completed - duration: {}ms, files generated: {}, output path: {}", 
+      log.debug("Code generation completed - duration: {}ms, files generated: {}, output path: {}",
         duration, outputFiles.size(), targetPath);
-      
+
       return targetPath;
     } catch (Exception e) {
       long endTime = System.currentTimeMillis();
       long duration = endTime - startTime;
-      log.error("Code generation failed - duration: {}ms, datasource: {}, template: {}", 
+      log.error("Code generation failed - duration: {}ms, datasource: {}, template: {}",
         duration, datasourceName, templateName, e);
       throw new RuntimeException(e);
     }
@@ -170,6 +188,11 @@ public class CodeGenerationService {
   }
 
   private void outFile(GroovyClassLoader classLoader, GenerationContext context, String sourceDirectory, String targetDirectory, List<File> outputFiles, Path path) throws Exception {
+    // Skip .flexmodel directory and its contents
+    if (isFlexModelPath(path)) {
+      return;
+    }
+
     String normalizedSource = sourceDirectory.replace("\\", "/");
     String normalizedTarget = targetDirectory.replace("\\", "/");
 
@@ -201,13 +224,24 @@ public class CodeGenerationService {
       outputFiles.addAll(result);
     } catch (Exception e) {
       log.error("Generate file error, file: {}", path, e);
-      copyFile(path, context, sourceDirectory, targetDirectory, outputFiles);
+      String targetPath = resolveTargetPath(path.toString(), context, sourceDirectory, targetDirectory);
+      Files.copy(path, Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+      outputFiles.add(new File(targetPath));
     }
   }
 
   private void copyFile(Path path, GenerationContext context, String sourceDirectory, String targetDirectory, List<File> outputFiles) throws Exception {
     String targetPath = resolveTargetPath(path.toString(), context, sourceDirectory, targetDirectory);
-    Files.copy(path, Paths.get(targetPath), StandardCopyOption.REPLACE_EXISTING);
+
+    // Read source file content and apply template variable replacement
+    String content = Files.readString(path);
+    String processedContent = simpleRenderTemplate(content, context.getVariables());
+
+    // Ensure target directory exists and write processed content
+    Path targetFilePath = Paths.get(targetPath);
+    Files.createDirectories(targetFilePath.getParent());
+    Files.writeString(targetFilePath, processedContent);
+
     outputFiles.add(new File(targetPath));
   }
 
@@ -217,37 +251,39 @@ public class CodeGenerationService {
   }
 
   /**
-   * Merge user variables with default variables from .flexmodel/variables.json
+   * Check if the path is within .flexmodel directory
+   */
+  private boolean isFlexModelPath(Path path) {
+    String pathString = path.toString().replace("\\", "/");
+    return pathString.contains("/.flexmodel/") || pathString.endsWith("/.flexmodel");
+  }
+
+
+  /**
+   * Merge user variables with preloaded default variables
    */
   private Map<String, Object> mergeWithDefaultVariables(String templateName, Map<String, Object> userVariables) {
-    Map<String, Object> mergedVariables = new HashMap<>();
-    
-    try {
-      // Load default variables from .flexmodel/variables.json
-      Map<String, Object> defaultVariables = loadDefaultVariables(templateName);
-      if (defaultVariables != null) {
-        mergedVariables.putAll(defaultVariables);
-        log.debug("Loaded default variables for template {}: {}", templateName, defaultVariables.keySet());
-      }
-    } catch (Exception e) {
-      log.debug("No default variables found for template {}: {}", templateName, e.getMessage());
-    }
-    
-    // User variables override default variables
-    if (userVariables != null) {
+    // Get preloaded default variables from cache
+    TemplateInfo templateInfo = templateInfoMap.get(templateName);
+
+
+    // User variables provided, need to merge
+    if (templateInfo != null) {
+      Map<String, Object> mergedVariables = new HashMap<>(templateInfo.variables());
       mergedVariables.putAll(userVariables);
-      log.debug("Merged user variables: {}", userVariables.keySet());
+      return mergedVariables;
     }
-    
-    return mergedVariables;
+
+    // No default variables, return user variables
+    return new HashMap<>(userVariables);
   }
 
   /**
-   * Load default variables from .flexmodel/variables.json
+   * Load default variables from .flexmodel/variables.json and cache them
    */
-  private Map<String, Object> loadDefaultVariables(String templateName) throws Exception {
+  private Map<String, Object> loadTemplate(String templateName) throws Exception {
     Path variablesPath;
-    
+
     if (fs == FileSystems.getDefault()) {
       // Local file system
       URL resUrl = this.getClass().getClassLoader().getResource(TEMPLATE_ROOT + "/" + templateName + "/.flexmodel/variables.json");
@@ -262,26 +298,25 @@ public class CodeGenerationService {
         return null; // No default variables file
       }
     }
-    
-    ObjectMapper mapper = new ObjectMapper();
+
     String jsonContent = Files.readString(variablesPath);
-    @SuppressWarnings("unchecked")
-    Map<String, Object> variables = mapper.readValue(jsonContent, Map.class);
-    
+    Map<String, Object> variables = jsonConverter.parseToMap(jsonContent);
+    // Cache the result
+    templateInfoMap.put(templateName, new TemplateInfo(templateName, variables));
+
     return variables;
   }
 
   private GenerationContext buildContext(String datasource, Map<String, Object> variables) {
     String packageName = variables.getOrDefault("packageName", "com.example").toString();
-    if (!variables.containsKey("packageName")) {
-      String packageNameOfPath = packageName.replaceAll("\\.", "/");
-      variables.put("packageName", "com.example");
-      variables.put("path", packageNameOfPath);
-    }
+
+    // Create a copy of variables to avoid modifying the original
+    Map<String, Object> contextVariables = new HashMap<>(variables);
+
     GenerationContext ctx = new GenerationContext();
     ctx.setSchemaName(datasource);
     ctx.setPackageName(packageName);
-    ctx.setVariables(variables);
+    ctx.setVariables(contextVariables);
 
     // Load all models
     sessionFactory.getModels(datasource).forEach(model -> {
