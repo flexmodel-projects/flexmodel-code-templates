@@ -15,7 +15,7 @@ class JavaSdkEntityGenerator extends AbstractGenerator {
   @Override
   void writeModel(PrintWriter out, GenerationContext context) {
     def modelClass = context.modelClass
-    out.println "package ${modelClass.packageName}.entity;"
+    out.println "package ${modelClass.packageName};"
     out.println ""
     out.println "public class ${modelClass.shortClassName} {"
     modelClass.allFields.each { field ->

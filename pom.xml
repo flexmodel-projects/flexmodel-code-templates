@@ -8,6 +8,16 @@
   <groupId>tech.wetech.flexmodel</groupId>
   <artifactId>flexmodel-code-templates</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  <properties>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <flexmodel.version>0.0.1-SNAPSHOT</flexmodel.version>
+    <junit.version>5.10.3</junit.version>
+    <HikariCP.version>5.1.0</HikariCP.version>
+    <sqlite-jdbc.version>3.45.3.0</sqlite-jdbc.version>
+  </properties>
   <distributionManagement>
     <repository>
       <id>github</id>
@@ -19,8 +29,32 @@
     <dependency>
       <groupId>tech.wetech.flexmodel</groupId>
       <artifactId>flexmodel-codegen</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>${flexmodel.version}</version>
       <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.xerial</groupId>
+      <artifactId>sqlite-jdbc</artifactId>
+      <version>${sqlite-jdbc.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>${HikariCP.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-reload4j</artifactId>
+      <version>2.0.12</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
