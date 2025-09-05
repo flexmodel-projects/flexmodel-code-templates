@@ -1,0 +1,9 @@
+{
+  "packageName": "com.example",
+  "path": "com/example",
+  "projectName": "java-sdk",
+  "description": "Java SDK Sample",
+  "version": "1.0.0",
+  "groupId": "com.example",
+  "artifactId": "java-sdk-sample"
+}

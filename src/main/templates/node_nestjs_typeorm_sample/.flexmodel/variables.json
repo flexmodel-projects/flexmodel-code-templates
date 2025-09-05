@@ -1,0 +1,8 @@
+{
+  "packageName": "com.example",
+  "path": "com/example",
+  "projectName": "nestjs-app",
+  "description": "NestJS TypeORM Sample Application",
+  "version": "1.0.0",
+  "author": "Developer"
+}

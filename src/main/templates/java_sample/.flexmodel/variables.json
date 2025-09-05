@@ -1,0 +1,9 @@
+{
+  "packageName": "com.example",
+  "path": "com/example",
+  "projectName": "java-sample",
+  "description": "Java Sample Application",
+  "version": "1.0.0",
+  "groupId": "com.example",
+  "artifactId": "java-sample"
+}

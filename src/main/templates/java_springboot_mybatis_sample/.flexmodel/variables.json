@@ -1,0 +1,9 @@
+{
+  "packageName": "com.example",
+  "path": "com/example",
+  "projectName": "springboot-mybatis-app",
+  "description": "Spring Boot MyBatis Sample Application",
+  "version": "1.0.0",
+  "groupId": "com.example",
+  "artifactId": "springboot-mybatis-sample"
+}
