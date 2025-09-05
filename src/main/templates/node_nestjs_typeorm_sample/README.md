@@ -1,6 +1,6 @@
 # NestJS + TypeORM 模板
 
-本模板参考 `java_springboot_mybatis_sample`，提供基于 NestJS + TypeORM 的代码生成骨架，用于从 FlexModel 模型生成基础的 CRUD 代码结构。
+本模板参考 `java_springboot_mybatis_sample`，提供基于 NestJS + TypeORM 的代码生成骨架，用于从 Flexmodel 模型生成基础的 CRUD 代码结构。
 
 包含内容：
 - 基础工程文件：`package.json`、`nest-cli.json`、`tsconfig*.json`
@@ -14,7 +14,7 @@
 - 模块：注册实体仓库与服务、控制器。
 
 使用说明（示例）：
-1. 在 FlexModel 中选择本模板并生成到目标目录。
+1. 在 Flexmodel 中选择本模板并生成到目标目录。
 2. 进入生成目录：
    ```bash
    npm install

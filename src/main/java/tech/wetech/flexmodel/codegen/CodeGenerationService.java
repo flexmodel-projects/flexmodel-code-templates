@@ -189,7 +189,7 @@ public class CodeGenerationService {
 
   private void outFile(GroovyClassLoader classLoader, GenerationContext context, String sourceDirectory, String targetDirectory, List<File> outputFiles, Path path) throws Exception {
     // Skip .flexmodel directory and its contents
-    if (isFlexModelPath(path)) {
+    if (isFlexmodelPath(path)) {
       return;
     }
 
@@ -253,7 +253,7 @@ public class CodeGenerationService {
   /**
    * Check if the path is within .flexmodel directory
    */
-  private boolean isFlexModelPath(Path path) {
+  private boolean isFlexmodelPath(Path path) {
     String pathString = path.toString().replace("\\", "/");
     return pathString.contains("/.flexmodel/") || pathString.endsWith("/.flexmodel");
   }

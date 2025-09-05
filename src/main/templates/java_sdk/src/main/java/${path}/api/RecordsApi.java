@@ -16,7 +16,8 @@ public class RecordsApi {
     this.apiClient = apiClient;
   }
 
-  public ApiResponse<PageResult<Map<String, Object>>> listRecords(
+  // 通用方法 - 返回分页结果
+  public PageResult<Map<String, Object>> listRecords(
       String datasourceName,
       String modelName,
       Integer current,
@@ -36,10 +37,23 @@ public class RecordsApi {
     if (nestedQuery != null) q.put("nestedQuery", nestedQuery);
     if (sort != null) q.put("sort", sort);
 
-    PageResult<Map<String, Object>> data = apiClient.get(
+    return apiClient.get(
         path, q, new TypeReference<PageResult<Map<String, Object>>>() {}
     );
-    return new ApiResponse<>(200, data);
+  }
+
+  // 通用方法 - 直接返回实体列表（不分页）
+  public List<Map<String, Object>> listRecordsAsList(
+      String datasourceName,
+      String modelName,
+      String filter,
+      Boolean nestedQuery,
+      String sort
+  ) {
+    PageResult<Map<String, Object>> pageResult = listRecords(
+        datasourceName, modelName, null, null, filter, nestedQuery, sort
+    );
+    return pageResult.getList();
   }
 
   public Map<String, Object> createRecord(
