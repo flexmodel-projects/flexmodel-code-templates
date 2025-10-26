@@ -3,11 +3,10 @@ package tech.wetech.flexmodel.codegen;
 import groovy.lang.GroovyClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import tech.wetech.flexmodel.JsonObjectConverter;
+import tech.wetech.flexmodel.JsonUtils;
 import tech.wetech.flexmodel.model.EntityDefinition;
 import tech.wetech.flexmodel.model.EnumDefinition;
 import tech.wetech.flexmodel.session.SessionFactory;
-import tech.wetech.flexmodel.supports.jackson.JacksonObjectConverter;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +34,6 @@ public class CodeGenerationService {
   private final GroovyClassLoader loader = new GroovyClassLoader();
 
   private final SessionFactory sessionFactory;
-  private final JsonObjectConverter jsonConverter = new JacksonObjectConverter();
 
   private final Map<String, TemplateInfo> templateInfoMap = new HashMap<>();
 
@@ -300,7 +298,7 @@ public class CodeGenerationService {
     }
 
     String jsonContent = Files.readString(variablesPath);
-    Map<String, Object> variables = jsonConverter.parseToMap(jsonContent);
+    Map<String, Object> variables = JsonUtils.parseToMap(jsonContent);
     // Cache the result
     templateInfoMap.put(templateName, new TemplateInfo(templateName, variables));
 
